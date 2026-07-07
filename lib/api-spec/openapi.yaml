@@ -258,6 +258,12 @@ components:
           type: integer
         name:
           type: string
+        partNumber:
+          type: ["string", "null"]
+        vendor:
+          type: ["string", "null"]
+        dateOrdered:
+          type: ["string", "null"]
         status:
           $ref: "#/components/schemas/PartStatus"
         createdAt:
@@ -274,6 +280,12 @@ components:
         name:
           type: string
           minLength: 1
+        partNumber:
+          type: ["string", "null"]
+        vendor:
+          type: ["string", "null"]
+        dateOrdered:
+          type: ["string", "null"]
         status:
           $ref: "#/components/schemas/PartStatus"
 
@@ -283,6 +295,12 @@ components:
         name:
           type: string
           minLength: 1
+        partNumber:
+          type: ["string", "null"]
+        vendor:
+          type: ["string", "null"]
+        dateOrdered:
+          type: ["string", "null"]
         status:
           $ref: "#/components/schemas/PartStatus"
 
@@ -319,7 +337,7 @@ components:
 
     CustomerDetail:
       type: object
-      required: [id, name, vehicleYear, vehicleMake, vehicleModel, status, parts, updatedAt, createdAt]
+      required: [id, name, vehicleYear, vehicleMake, vehicleModel, status, parts, partsTotal, partsReceived, updatedAt, createdAt]
       properties:
         id:
           type: integer
@@ -341,6 +359,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Part"
+        partsTotal:
+          type: integer
+        partsReceived:
+          type: integer
         updatedAt:
           type: string
           format: date-time
@@ -399,3 +421,22 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Customer"
+
+    ImportResult:
+      type: object
+      required: [customersCreated, customersUpdated, partsCreated, partsUpdated, partsSkipped]
+      properties:
+        customersCreated:
+          type: integer
+        customersUpdated:
+          type: integer
+        partsCreated:
+          type: integer
+        partsUpdated:
+          type: integer
+        partsSkipped:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string

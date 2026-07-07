@@ -40,6 +40,9 @@ router.post("/customers/:customerId/parts", async (req, res): Promise<void> => {
     .values({
       customerId: paramsParsed.data.customerId,
       name: bodyParsed.data.name,
+      partNumber: bodyParsed.data.partNumber ?? null,
+      vendor: bodyParsed.data.vendor ?? null,
+      dateOrdered: bodyParsed.data.dateOrdered ?? null,
       status: bodyParsed.data.status ?? "waiting",
     })
     .returning();
@@ -70,6 +73,9 @@ router.patch("/parts/:id", async (req, res): Promise<void> => {
   const updates: Partial<typeof partsTable.$inferInsert> = {};
   if (bodyParsed.data.name !== undefined) updates.name = bodyParsed.data.name;
   if (bodyParsed.data.status !== undefined) updates.status = bodyParsed.data.status;
+  if (bodyParsed.data.partNumber !== undefined) updates.partNumber = bodyParsed.data.partNumber;
+  if (bodyParsed.data.vendor !== undefined) updates.vendor = bodyParsed.data.vendor;
+  if (bodyParsed.data.dateOrdered !== undefined) updates.dateOrdered = bodyParsed.data.dateOrdered;
 
   const [updated] = await db
     .update(partsTable)

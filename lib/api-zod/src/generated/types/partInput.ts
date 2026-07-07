@@ -10,5 +10,11 @@ import type { PartStatus } from './partStatus';
 export interface PartInput {
   /** @minLength 1 */
   name: string;
+  /** @nullable */
+  partNumber?: string | null;
+  /** @nullable */
+  vendor?: string | null;
+  /** @nullable */
+  dateOrdered?: string | null;
   status?: PartStatus;
 }

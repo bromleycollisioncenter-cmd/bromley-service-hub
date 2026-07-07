@@ -31,6 +31,12 @@ export interface Part {
   id: number;
   customerId: number;
   name: string;
+  /** @nullable */
+  partNumber?: string | null;
+  /** @nullable */
+  vendor?: string | null;
+  /** @nullable */
+  dateOrdered?: string | null;
   status: PartStatus;
   createdAt: string;
   updatedAt: string;
@@ -39,12 +45,24 @@ export interface Part {
 export interface PartInput {
   /** @minLength 1 */
   name: string;
+  /** @nullable */
+  partNumber?: string | null;
+  /** @nullable */
+  vendor?: string | null;
+  /** @nullable */
+  dateOrdered?: string | null;
   status?: PartStatus;
 }
 
 export interface PartUpdate {
   /** @minLength 1 */
   name?: string;
+  /** @nullable */
+  partNumber?: string | null;
+  /** @nullable */
+  vendor?: string | null;
+  /** @nullable */
+  dateOrdered?: string | null;
   status?: PartStatus;
 }
 
@@ -83,6 +101,8 @@ export interface CustomerDetail {
   notes?: string | null;
   status: CustomerStatus;
   parts: Part[];
+  partsTotal: number;
+  partsReceived: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -123,6 +143,15 @@ export interface DashboardStats {
   customersWaitingOnParts: number;
   jobsReadyToComplete: number;
   recentlyUpdated: Customer[];
+}
+
+export interface ImportResult {
+  customersCreated: number;
+  customersUpdated: number;
+  partsCreated: number;
+  partsUpdated: number;
+  partsSkipped: number;
+  errors?: string[];
 }
 
 export type SearchParams = {

@@ -23,6 +23,8 @@ export interface CustomerDetail {
   notes?: string | null;
   status: CustomerStatus;
   parts: Part[];
+  partsTotal: number;
+  partsReceived: number;
   updatedAt: Date;
   createdAt: Date;
 }

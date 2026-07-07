@@ -11,6 +11,12 @@ export interface Part {
   id: number;
   customerId: number;
   name: string;
+  /** @nullable */
+  partNumber?: string | null;
+  /** @nullable */
+  vendor?: string | null;
+  /** @nullable */
+  dateOrdered?: string | null;
   status: PartStatus;
   createdAt: Date;
   updatedAt: Date;

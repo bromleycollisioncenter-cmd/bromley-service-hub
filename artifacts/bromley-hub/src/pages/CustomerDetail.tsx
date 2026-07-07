@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRoute, Link } from "wouter";
-import { 
-  useGetCustomer, 
-  useUpdateCustomer, 
-  useDeleteCustomer, 
-  useAddPart, 
-  useUpdatePart, 
+import {
+  useGetCustomer,
+  useUpdateCustomer,
+  useDeleteCustomer,
+  useAddPart,
+  useUpdatePart,
   useDeletePart,
-  getGetCustomerQueryKey 
+  getGetCustomerQueryKey,
+  getListCustomersQueryKey,
+  getGetDashboardQueryKey as getDashboardQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,19 +17,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusDot } from "@/components/StatusDot";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit2, Trash2, Plus, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, Edit2, Trash2, Plus, AlertTriangle, CheckCircle2, Clock, Upload, Package, Truck, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export default function CustomerDetail() {
   const [, params] = useRoute("/customers/:id");
   const id = params?.id ? parseInt(params.id, 10) : 0;
-  
+
   const queryClient = useQueryClient();
-  const { data: customer, isLoading } = useGetCustomer(id, { 
-    query: { enabled: !!id, queryKey: getGetCustomerQueryKey(id) } 
+  const { toast } = useToast();
+  const { data: customer, isLoading } = useGetCustomer(id, {
+    query: { enabled: !!id, queryKey: getGetCustomerQueryKey(id) }
   });
-  
+
   const updateCustomer = useUpdateCustomer();
   const deleteCustomer = useDeleteCustomer();
   const addPart = useAddPart();
@@ -36,52 +40,64 @@ export default function CustomerDetail() {
 
   const [newPartName, setNewPartName] = useState("");
   const [isAddingPart, setIsAddingPart] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: getGetCustomerQueryKey(id) });
+    queryClient.invalidateQueries({ queryKey: getListCustomersQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getDashboardQueryKey() });
+  };
 
   const handleAddPart = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPartName.trim()) return;
-    
+
     addPart.mutate(
       { customerId: id, data: { name: newPartName, status: "waiting" } },
       {
         onSuccess: () => {
           setNewPartName("");
           setIsAddingPart(false);
-          queryClient.invalidateQueries({ queryKey: getGetCustomerQueryKey(id) });
-        }
-      }
-    );
-  };
-
-  const handleTogglePartStatus = (partId: number, currentStatus: string) => {
-    const nextStatusMap: Record<string, "received" | "waiting" | "backordered"> = {
-      "waiting": "received",
-      "received": "backordered",
-      "backordered": "waiting"
-    };
-    
-    const newStatus = nextStatusMap[currentStatus];
-    
-    updatePart.mutate(
-      { id: partId, data: { status: newStatus } },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getGetCustomerQueryKey(id) });
+          invalidateAll();
         }
       }
     );
   };
 
   const handleDeletePart = (partId: number) => {
-    if (confirm("Are you sure you want to remove this part?")) {
-      deletePart.mutate(
-        { id: partId },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: getGetCustomerQueryKey(id) });
-          }
-        }
-      );
+    if (confirm("Remove this part?")) {
+      deletePart.mutate({ id: partId }, { onSuccess: invalidateAll });
+    }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsImporting(true);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const res = await fetch(`${base}/api/import`, { method: "POST", body: formData });
+      const result = await res.json();
+
+      if (!res.ok) {
+        toast({ title: "Import failed", description: result.error ?? "Unknown error", variant: "destructive" });
+      } else {
+        toast({
+          title: "Import complete",
+          description: `${result.partsCreated} new parts added, ${result.partsUpdated} updated, ${result.partsSkipped} unchanged.`,
+        });
+        invalidateAll();
+      }
+    } catch {
+      toast({ title: "Import failed", description: "Could not reach the server.", variant: "destructive" });
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -122,7 +138,7 @@ export default function CustomerDetail() {
                 <StatusDot status={customer.status} className="h-4 w-4" />
                 <h1 className="text-3xl font-bold tracking-tight text-foreground">{customer.name}</h1>
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4">
                 <div>
                   <div className="text-sm font-medium text-muted-foreground mb-1">Vehicle</div>
@@ -131,7 +147,7 @@ export default function CustomerDetail() {
                     {!customer.vehicleYear && !customer.vehicleMake && <span className="text-muted-foreground italic text-sm">No vehicle assigned</span>}
                   </div>
                 </div>
-                
+
                 <div>
                   <div className="text-sm font-medium text-muted-foreground mb-1">RO Number</div>
                   <div>
@@ -168,81 +184,108 @@ export default function CustomerDetail() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between bg-muted/20 border-b pb-4">
           <CardTitle className="text-xl">Parts List</CardTitle>
-          <div className="text-sm font-medium px-3 py-1 rounded-full bg-secondary text-secondary-foreground">
-            {customer.partsReceived} / {customer.partsTotal} Received
+          <div className="flex items-center gap-3">
+            <div className="text-sm font-medium px-3 py-1 rounded-full bg-secondary text-secondary-foreground">
+              {customer.partsReceived} / {customer.partsTotal} Received
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y">
             {customer.parts.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground">
-                <WrenchIcon className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                <Package className="h-10 w-10 mx-auto mb-3 opacity-20" />
                 <p>No parts added to this job yet.</p>
               </div>
             ) : (
               customer.parts.map((part) => (
-                <div key={part.id} className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-muted/30 transition-colors">
-                  <div className="flex-1 font-medium text-lg">
-                    {part.name}
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    {/* Status Toggles */}
-                    <div className="flex bg-secondary p-1 rounded-lg">
-                      <button
-                        onClick={() => updatePart.mutate({ id: part.id, data: { status: "received" } }, { onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetCustomerQueryKey(id) })})}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-2 transition-all ${
-                          part.status === "received" 
-                            ? "bg-green-500 text-white shadow-sm" 
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {part.status === "received" && <CheckCircle2 className="h-4 w-4" />}
-                        Received
-                      </button>
-                      <button
-                        onClick={() => updatePart.mutate({ id: part.id, data: { status: "waiting" } }, { onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetCustomerQueryKey(id) })})}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-2 transition-all ${
-                          part.status === "waiting" 
-                            ? "bg-yellow-400 text-yellow-950 shadow-sm" 
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {part.status === "waiting" && <Clock className="h-4 w-4" />}
-                        Waiting
-                      </button>
-                      <button
-                        onClick={() => updatePart.mutate({ id: part.id, data: { status: "backordered" } }, { onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetCustomerQueryKey(id) })})}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-2 transition-all ${
-                          part.status === "backordered" 
-                            ? "bg-red-500 text-white shadow-sm" 
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {part.status === "backordered" && <AlertTriangle className="h-4 w-4" />}
-                        B/O
-                      </button>
+                <div key={part.id} data-testid={`part-row-${part.id}`} className="p-4 sm:p-6 flex flex-col gap-3 hover:bg-muted/30 transition-colors">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="font-medium text-base">{part.name}</div>
+                      <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
+                        {part.partNumber && (
+                          <span className="flex items-center gap-1">
+                            <Package className="h-3 w-3" />
+                            <span className="font-mono">{part.partNumber}</span>
+                          </span>
+                        )}
+                        {part.vendor && (
+                          <span className="flex items-center gap-1">
+                            <Truck className="h-3 w-3" />
+                            {part.vendor}
+                          </span>
+                        )}
+                        {part.dateOrdered && (
+                          <span className="flex items-center gap-1">
+                            <CalendarDays className="h-3 w-3" />
+                            Ordered {part.dateOrdered}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    <button 
-                      onClick={() => handleDeletePart(part.id)}
-                      className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
-                      title="Delete part"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center gap-3">
+                      {/* Status Toggles */}
+                      <div className="flex bg-secondary p-1 rounded-lg">
+                        <button
+                          data-testid={`status-received-${part.id}`}
+                          onClick={() => updatePart.mutate({ id: part.id, data: { status: "received" } }, { onSuccess: invalidateAll })}
+                          className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-2 transition-all ${
+                            part.status === "received"
+                              ? "bg-green-500 text-white shadow-sm"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          {part.status === "received" && <CheckCircle2 className="h-4 w-4" />}
+                          Received
+                        </button>
+                        <button
+                          data-testid={`status-waiting-${part.id}`}
+                          onClick={() => updatePart.mutate({ id: part.id, data: { status: "waiting" } }, { onSuccess: invalidateAll })}
+                          className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-2 transition-all ${
+                            part.status === "waiting"
+                              ? "bg-yellow-400 text-yellow-950 shadow-sm"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          {part.status === "waiting" && <Clock className="h-4 w-4" />}
+                          Waiting
+                        </button>
+                        <button
+                          data-testid={`status-backordered-${part.id}`}
+                          onClick={() => updatePart.mutate({ id: part.id, data: { status: "backordered" } }, { onSuccess: invalidateAll })}
+                          className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-2 transition-all ${
+                            part.status === "backordered"
+                              ? "bg-red-500 text-white shadow-sm"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          {part.status === "backordered" && <AlertTriangle className="h-4 w-4" />}
+                          B/O
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={() => handleDeletePart(part.id)}
+                        className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                        title="Delete part"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
             )}
           </div>
-          
+
           <div className="p-4 sm:p-6 bg-muted/10 border-t">
             {isAddingPart ? (
               <form onSubmit={handleAddPart} className="flex items-center gap-3">
-                <Input 
+                <Input
                   autoFocus
-                  placeholder="Enter part name..." 
+                  placeholder="Enter part name..."
                   value={newPartName}
                   onChange={(e) => setNewPartName(e.target.value)}
                   className="flex-1"
@@ -255,7 +298,12 @@ export default function CustomerDetail() {
                 </Button>
               </form>
             ) : (
-              <Button onClick={() => setIsAddingPart(true)} variant="outline" className="w-full border-dashed border-2 py-6 text-muted-foreground hover:text-foreground hover:border-primary hover:bg-primary/5">
+              <Button
+                onClick={() => setIsAddingPart(true)}
+                variant="outline"
+                className="w-full border-dashed border-2 py-6 text-muted-foreground hover:text-foreground hover:border-primary hover:bg-primary/5"
+                data-testid="button-add-part"
+              >
                 <Plus className="mr-2 h-5 w-5" />
                 Add Part to Job
               </Button>
@@ -263,26 +311,29 @@ export default function CustomerDetail() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Import from Spreadsheet */}
+      <div className="flex items-center justify-center">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx,.xls"
+          className="hidden"
+          onChange={handleImport}
+          data-testid="input-import-file"
+        />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-foreground gap-2"
+          disabled={isImporting}
+          onClick={() => fileInputRef.current?.click()}
+          data-testid="button-import-spreadsheet"
+        >
+          <Upload className="h-4 w-4" />
+          {isImporting ? "Importing..." : "Import from Spreadsheet (.xlsx)"}
+        </Button>
+      </div>
     </div>
   );
-}
-
-// Simple icon for empty state since Wrench wasn't imported initially in this scope properly
-function WrenchIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-    </svg>
-  )
 }

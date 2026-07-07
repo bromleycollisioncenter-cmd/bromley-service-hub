@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { useSearch } from "@workspace/api-client-react";
+import { useSearch, getSearchQueryKey } from "@workspace/api-client-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { StatusDot } from "@/components/StatusDot";
@@ -29,8 +29,8 @@ export default function Search() {
   }, [query]);
 
   const { data: results, isLoading } = useSearch(
-    { q: debouncedQuery }, 
-    { query: { enabled: debouncedQuery.length > 0 } }
+    { q: debouncedQuery },
+    { query: { enabled: debouncedQuery.length > 0, queryKey: getSearchQueryKey({ q: debouncedQuery }) } }
   );
 
   return (

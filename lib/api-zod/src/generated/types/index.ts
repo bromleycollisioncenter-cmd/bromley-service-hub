@@ -13,6 +13,7 @@ export * from './customerStatus';
 export * from './customerUpdate';
 export * from './dashboardStats';
 export * from './healthStatus';
+export * from './importResult';
 export * from './part';
 export * from './partInput';
 export * from './partStatus';

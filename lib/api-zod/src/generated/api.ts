@@ -140,10 +140,15 @@ export const GetCustomerResponse = zod.object({
   "id": zod.number(),
   "customerId": zod.number(),
   "name": zod.string(),
+  "partNumber": zod.string().nullish(),
+  "vendor": zod.string().nullish(),
+  "dateOrdered": zod.string().nullish(),
   "status": zod.enum(['received', 'waiting', 'backordered']),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })),
+  "partsTotal": zod.number(),
+  "partsReceived": zod.number(),
   "updatedAt": zod.coerce.date(),
   "createdAt": zod.coerce.date()
 })
@@ -206,6 +211,9 @@ export const AddPartParams = zod.object({
 
 export const AddPartBody = zod.object({
   "name": zod.string().min(1),
+  "partNumber": zod.string().nullish(),
+  "vendor": zod.string().nullish(),
+  "dateOrdered": zod.string().nullish(),
   "status": zod.enum(['received', 'waiting', 'backordered']).optional()
 })
 
@@ -213,6 +221,9 @@ export const AddPartResponse = zod.object({
   "id": zod.number(),
   "customerId": zod.number(),
   "name": zod.string(),
+  "partNumber": zod.string().nullish(),
+  "vendor": zod.string().nullish(),
+  "dateOrdered": zod.string().nullish(),
   "status": zod.enum(['received', 'waiting', 'backordered']),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
@@ -231,6 +242,9 @@ export const UpdatePartParams = zod.object({
 
 export const UpdatePartBody = zod.object({
   "name": zod.string().min(1).optional(),
+  "partNumber": zod.string().nullish(),
+  "vendor": zod.string().nullish(),
+  "dateOrdered": zod.string().nullish(),
   "status": zod.enum(['received', 'waiting', 'backordered']).optional()
 })
 
@@ -238,6 +252,9 @@ export const UpdatePartResponse = zod.object({
   "id": zod.number(),
   "customerId": zod.number(),
   "name": zod.string(),
+  "partNumber": zod.string().nullish(),
+  "vendor": zod.string().nullish(),
+  "dateOrdered": zod.string().nullish(),
   "status": zod.enum(['received', 'waiting', 'backordered']),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
