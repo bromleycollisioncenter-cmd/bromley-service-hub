@@ -51,13 +51,14 @@ router.post(
 
     const headers = Object.keys(rows[0]);
 
-    const colCustomer = findCol(headers, ["customer name", "customer", "name", "client name", "client"]);
+    const colCustomer = findCol(headers, ["customer", "customer name", "name", "client name", "client"]);
     const colPartNum = findCol(headers, ["part number", "part #", "part no", "part no.", "partno", "part_number"]);
     const colPartDesc = findCol(headers, ["part description", "description", "part desc", "part name", "part"]);
     const colVendor = findCol(headers, ["vendor", "supplier", "source", "vendor name"]);
-    const colDateOrdered = findCol(headers, ["date ordered", "order date", "ordered", "date", "ordered date"]);
-    const colReceived = findCol(headers, ["received", "received?", "received (y/n)", "received y/n", "rcvd", "in stock", "arrived"]);
-    const colVehicle = findCol(headers, ["vehicle make and model", "vehicle", "make and model", "make/model", "vehicle make/model", "car", "make & model"]);
+    const colDateOrdered = findCol(headers, ["order date", "date ordered", "ordered", "date", "ordered date"]);
+    const colStatus = findCol(headers, ["status", "part status"]);
+    const colDateReceived = findCol(headers, ["date received", "received date", "received on", "date received?"]);
+    const colVehicle = findCol(headers, ["vehicle", "vehicle make and model", "make and model", "make/model", "vehicle make/model", "car", "make & model"]);
 
     if (!colCustomer) {
       res.status(400).json({ error: "Could not find a customer name column. Expected a column named 'Customer Name'." });
@@ -98,24 +99,37 @@ router.post(
 
       const partNumber = colPartNum ? String(row[colPartNum] ?? "").trim() || null : null;
       const vendor = colVendor ? String(row[colVendor] ?? "").trim() || null : null;
-      const dateOrdered = colDateOrdered
-        ? (() => {
-            const v = row[colDateOrdered];
-            if (v instanceof Date) return v.toISOString().split("T")[0];
-            const s = String(v ?? "").trim();
-            return s || null;
-          })()
-        : null;
-      const vehicle = colVehicle ? String(row[colVehicle] ?? "").trim() || null : null;
-      const isReceived = colReceived ? parseReceived(row[colReceived]) : false;
-      const status: "received" | "waiting" = isReceived ? "received" : "waiting";
 
-      // Upsert customer
+      const parseDate = (v: unknown): string | null => {
+        if (!v) return null;
+        if (v instanceof Date) return v.toISOString().split("T")[0];
+        const s = String(v).trim();
+        return s || null;
+      };
+
+      const dateOrdered = colDateOrdered ? parseDate(row[colDateOrdered]) : null;
+      const dateReceived = colDateReceived ? parseDate(row[colDateReceived]) : null;
+      const vehicle = colVehicle ? String(row[colVehicle] ?? "").trim() || null : null;
+
+      // Determine status: date received → received; status column; fallback waiting
+      let status: "received" | "waiting" | "backordered" = "waiting";
+      if (dateReceived) {
+        status = "received";
+      } else if (colStatus) {
+        const raw = String(row[colStatus] ?? "").toLowerCase().trim();
+        if (raw === "received" || raw === "yes" || raw === "y" || raw === "complete" || raw === "done") {
+          status = "received";
+        } else if (raw === "backordered" || raw === "back order" || raw === "back-order" || raw === "b/o" || raw === "bo") {
+          status = "backordered";
+        }
+      }
+
+      // Upsert customer — never overwrite vehicle info that already exists
       const nameKey = customerName.toLowerCase();
       let customerId = customerCache.get(nameKey);
 
-      if (customerId === undefined) {
-        try {
+      try {
+        if (customerId === undefined) {
           const [newCustomer] = await db
             .insert(customersTable)
             .values({ name: customerName, vehicleMake: vehicle })
@@ -123,45 +137,59 @@ router.post(
           customerId = newCustomer.id;
           customerCache.set(nameKey, customerId);
           customersCreated++;
-        } catch (err) {
-          errors.push(`Row ${rowNum}: Failed to create customer "${customerName}"`);
-          continue;
-        }
-      } else {
-        // Update vehicle if we now have it and didn't before
-        if (vehicle) {
-          await db
-            .update(customersTable)
-            .set({ vehicleMake: vehicle, updatedAt: new Date() })
+        } else if (vehicle) {
+          // Only fill in vehicle if the customer has none yet — never overwrite
+          const [existing] = await db
+            .select({ vehicleMake: customersTable.vehicleMake })
+            .from(customersTable)
             .where(eq(customersTable.id, customerId));
-          customersUpdated++;
+          if (!existing?.vehicleMake) {
+            await db
+              .update(customersTable)
+              .set({ vehicleMake: vehicle, updatedAt: new Date() })
+              .where(eq(customersTable.id, customerId));
+            customersUpdated++;
+          }
         }
+      } catch (err) {
+        errors.push(`Row ${rowNum}: Failed to create/update customer "${customerName}"`);
+        continue;
       }
 
-      // Upsert part — dedup key: (customerId + partNumber) if partNumber exists,
-      // otherwise (customerId + partDesc)
+      // Upsert part — robust dedup:
+      // 1. If row has a partNumber, match by partNumber OR by description (handles rows
+      //    that previously imported without a partNumber and now gain one)
+      // 2. Otherwise match by description only
       try {
         const existingParts = await db
           .select()
           .from(partsTable)
           .where(eq(partsTable.customerId, customerId));
 
+        const normPN = partNumber?.toLowerCase();
+        const normDesc = partDesc.toLowerCase();
+
         let existingPart = partNumber
-          ? existingParts.find((p) => p.partNumber?.toLowerCase() === partNumber.toLowerCase())
-          : existingParts.find((p) => p.name.toLowerCase() === partDesc.toLowerCase());
+          ? existingParts.find(
+              (p) =>
+                (p.partNumber && p.partNumber.toLowerCase() === normPN) ||
+                (!p.partNumber && p.name.toLowerCase() === normDesc),
+            )
+          : existingParts.find((p) => p.name.toLowerCase() === normDesc);
 
         if (existingPart) {
-          // Update if status changed or new info available
           const needsUpdate =
             existingPart.status !== status ||
             (vendor && existingPart.vendor !== vendor) ||
             (dateOrdered && existingPart.dateOrdered !== dateOrdered) ||
-            (partNumber && existingPart.partNumber !== partNumber);
+            (partNumber && existingPart.partNumber !== partNumber) ||
+            existingPart.name !== partDesc;
 
           if (needsUpdate) {
             await db
               .update(partsTable)
               .set({
+                name: partDesc,
                 status,
                 vendor: vendor ?? existingPart.vendor,
                 dateOrdered: dateOrdered ?? existingPart.dateOrdered,
