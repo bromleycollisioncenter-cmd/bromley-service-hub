@@ -3,13 +3,21 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Bromley Hub - Auto Parts Tracking API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: customers
+    description: Customer operations
+  - name: parts
+    description: Part operations
+  - name: dashboard
+    description: Dashboard summary
+  - name: search
+    description: Search operations
 paths:
   /healthz:
     get:
@@ -24,6 +32,204 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get dashboard stats
+      description: Returns summary stats for the home screen
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /search:
+    get:
+      operationId: search
+      tags: [search]
+      summary: Search customers
+      description: Search by customer name, vehicle, or RO number
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Customer"
+
+  /customers:
+    get:
+      operationId: listCustomers
+      tags: [customers]
+      summary: List all customers
+      description: Returns all customers sorted alphabetically with computed status
+      responses:
+        "200":
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Customer"
+    post:
+      operationId: createCustomer
+      tags: [customers]
+      summary: Create a customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerInput"
+      responses:
+        "201":
+          description: Created customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+
+  /customers/{id}:
+    get:
+      operationId: getCustomer
+      tags: [customers]
+      summary: Get a customer with their parts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Customer with parts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerDetail"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateCustomer
+      tags: [customers]
+      summary: Update a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerUpdate"
+      responses:
+        "200":
+          description: Updated customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteCustomer
+      tags: [customers]
+      summary: Delete a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /customers/{customerId}/parts:
+    post:
+      operationId: addPart
+      tags: [parts]
+      summary: Add a part to a customer
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartInput"
+      responses:
+        "201":
+          description: Created part
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Part"
+
+  /parts/{id}:
+    patch:
+      operationId: updatePart
+      tags: [parts]
+      summary: Update a part
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartUpdate"
+      responses:
+        "200":
+          description: Updated part
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Part"
+        "404":
+          description: Not found
+    delete:
+      operationId: deletePart
+      tags: [parts]
+      summary: Delete a part
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +240,162 @@ components:
       required:
         - status
 
+    PartStatus:
+      type: string
+      enum: [received, waiting, backordered]
+
+    CustomerStatus:
+      type: string
+      enum: [all_received, waiting, backordered]
+
+    Part:
+      type: object
+      required: [id, customerId, name, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        customerId:
+          type: integer
+        name:
+          type: string
+        status:
+          $ref: "#/components/schemas/PartStatus"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PartInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        status:
+          $ref: "#/components/schemas/PartStatus"
+
+    PartUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        status:
+          $ref: "#/components/schemas/PartStatus"
+
+    Customer:
+      type: object
+      required: [id, name, vehicleYear, vehicleMake, vehicleModel, status, updatedAt, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        vehicleYear:
+          type: ["integer", "null"]
+        vehicleMake:
+          type: ["string", "null"]
+        vehicleModel:
+          type: ["string", "null"]
+        roNumber:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        status:
+          $ref: "#/components/schemas/CustomerStatus"
+        partsTotal:
+          type: integer
+        partsReceived:
+          type: integer
+        updatedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    CustomerDetail:
+      type: object
+      required: [id, name, vehicleYear, vehicleMake, vehicleModel, status, parts, updatedAt, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        vehicleYear:
+          type: ["integer", "null"]
+        vehicleMake:
+          type: ["string", "null"]
+        vehicleModel:
+          type: ["string", "null"]
+        roNumber:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        status:
+          $ref: "#/components/schemas/CustomerStatus"
+        parts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Part"
+        updatedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    CustomerInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        vehicleYear:
+          type: ["integer", "null"]
+        vehicleMake:
+          type: ["string", "null"]
+        vehicleModel:
+          type: ["string", "null"]
+        roNumber:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+
+    CustomerUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        vehicleYear:
+          type: ["integer", "null"]
+        vehicleMake:
+          type: ["string", "null"]
+        vehicleModel:
+          type: ["string", "null"]
+        roNumber:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+
+    DashboardStats:
+      type: object
+      required: [openCustomers, partsReceivedToday, customersWaitingOnParts, jobsReadyToComplete, recentlyUpdated]
+      properties:
+        openCustomers:
+          type: integer
+        partsReceivedToday:
+          type: integer
+        customersWaitingOnParts:
+          type: integer
+        jobsReadyToComplete:
+          type: integer
+        recentlyUpdated:
+          type: array
+          items:
+            $ref: "#/components/schemas/Customer"
