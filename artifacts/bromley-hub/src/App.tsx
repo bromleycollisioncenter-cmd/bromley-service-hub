@@ -9,6 +9,8 @@ import Dashboard from "@/pages/Dashboard";
 import Customers from "@/pages/Customers";
 import CustomerDetail from "@/pages/CustomerDetail";
 import Search from "@/pages/Search";
+import Estimates from "@/pages/Estimates";
+import VehicleDetail from "@/pages/VehicleDetail";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +22,8 @@ function Router() {
         <Route path="/customers" component={Customers} />
         <Route path="/customers/:id" component={CustomerDetail} />
         <Route path="/search" component={Search} />
+        <Route path="/estimates" component={Estimates} />
+        <Route path="/vehicles/:id" component={VehicleDetail} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

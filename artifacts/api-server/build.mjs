@@ -100,6 +100,9 @@ async function buildAll() {
       "puppeteer",
       "puppeteer-core",
       "electron",
+      // pdfjs-dist must not be bundled — it initializes canvas APIs at module
+      // load time and expects them to be available as separate node_modules.
+      "pdfjs-dist",
     ],
     sourcemap: "linked",
     plugins: [

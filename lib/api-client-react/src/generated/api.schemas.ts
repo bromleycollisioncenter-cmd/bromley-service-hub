@@ -27,6 +27,17 @@ export const CustomerStatus = {
   backordered: 'backordered',
 } as const;
 
+export type VehicleStatus = typeof VehicleStatus[keyof typeof VehicleStatus];
+
+
+export const VehicleStatus = {
+  waiting_on_parts: 'waiting_on_parts',
+  in_repair: 'in_repair',
+  ready: 'ready',
+  complete: 'complete',
+  delivered: 'delivered',
+} as const;
+
 export interface Part {
   id: number;
   customerId: number;
@@ -70,13 +81,19 @@ export interface Customer {
   id: number;
   name: string;
   /** @nullable */
-  vehicleYear: number | null;
+  phone?: string | null;
   /** @nullable */
-  vehicleMake: string | null;
+  vehicleYear?: number | null;
   /** @nullable */
-  vehicleModel: string | null;
+  vehicleMake?: string | null;
+  /** @nullable */
+  vehicleModel?: string | null;
   /** @nullable */
   roNumber?: string | null;
+  /** @nullable */
+  insuranceCompany?: string | null;
+  /** @nullable */
+  claimNumber?: string | null;
   /** @nullable */
   notes?: string | null;
   status: CustomerStatus;
@@ -90,13 +107,19 @@ export interface CustomerDetail {
   id: number;
   name: string;
   /** @nullable */
-  vehicleYear: number | null;
+  phone?: string | null;
   /** @nullable */
-  vehicleMake: string | null;
+  vehicleYear?: number | null;
   /** @nullable */
-  vehicleModel: string | null;
+  vehicleMake?: string | null;
+  /** @nullable */
+  vehicleModel?: string | null;
   /** @nullable */
   roNumber?: string | null;
+  /** @nullable */
+  insuranceCompany?: string | null;
+  /** @nullable */
+  claimNumber?: string | null;
   /** @nullable */
   notes?: string | null;
   status: CustomerStatus;
@@ -111,6 +134,8 @@ export interface CustomerInput {
   /** @minLength 1 */
   name: string;
   /** @nullable */
+  phone?: string | null;
+  /** @nullable */
   vehicleYear?: number | null;
   /** @nullable */
   vehicleMake?: string | null;
@@ -118,6 +143,10 @@ export interface CustomerInput {
   vehicleModel?: string | null;
   /** @nullable */
   roNumber?: string | null;
+  /** @nullable */
+  insuranceCompany?: string | null;
+  /** @nullable */
+  claimNumber?: string | null;
   /** @nullable */
   notes?: string | null;
 }
@@ -126,6 +155,8 @@ export interface CustomerUpdate {
   /** @minLength 1 */
   name?: string;
   /** @nullable */
+  phone?: string | null;
+  /** @nullable */
   vehicleYear?: number | null;
   /** @nullable */
   vehicleMake?: string | null;
@@ -133,6 +164,10 @@ export interface CustomerUpdate {
   vehicleModel?: string | null;
   /** @nullable */
   roNumber?: string | null;
+  /** @nullable */
+  insuranceCompany?: string | null;
+  /** @nullable */
+  claimNumber?: string | null;
   /** @nullable */
   notes?: string | null;
 }
@@ -152,6 +187,192 @@ export interface ImportResult {
   partsUpdated: number;
   partsSkipped: number;
   errors?: string[];
+}
+
+export interface EstimatePart {
+  id: number;
+  vehicleId: number;
+  estimateId: number;
+  /** @nullable */
+  lineNumber?: number | null;
+  /** @nullable */
+  operation?: string | null;
+  description: string;
+  /** @nullable */
+  partNumber?: string | null;
+  /** @nullable */
+  quantity?: string | null;
+  /** @nullable */
+  price?: string | null;
+  /** @nullable */
+  laborHours?: string | null;
+  /** @nullable */
+  paintHours?: string | null;
+  ordered: boolean;
+  received: boolean;
+  installed: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EstimatePartUpdate {
+  ordered?: boolean;
+  received?: boolean;
+  installed?: boolean;
+}
+
+export interface EstimateDocument {
+  id: number;
+  vehicleId: number;
+  /** @nullable */
+  workfileId?: string | null;
+  /** @nullable */
+  jobNumber?: string | null;
+  /** @nullable */
+  estimateDate?: string | null;
+  /** @nullable */
+  pdfFilename?: string | null;
+  /** @nullable */
+  totalAmount?: string | null;
+  /** @nullable */
+  bodyLaborHours?: string | null;
+  /** @nullable */
+  paintLaborHours?: string | null;
+  /** @nullable */
+  paintSupplies?: string | null;
+  /** @nullable */
+  bodySupplies?: string | null;
+  /** @nullable */
+  miscellaneous?: string | null;
+  /** @nullable */
+  tax?: string | null;
+  /** @nullable */
+  grandTotal?: string | null;
+  /** @nullable */
+  deductible?: string | null;
+  /** @nullable */
+  customerPay?: string | null;
+  /** @nullable */
+  insurancePay?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Vehicle {
+  id: number;
+  /** @nullable */
+  workfileId?: string | null;
+  /** @nullable */
+  jobNumber?: string | null;
+  /** @nullable */
+  customerId?: number | null;
+  /** @nullable */
+  customerName?: string | null;
+  /** @nullable */
+  year?: number | null;
+  /** @nullable */
+  make?: string | null;
+  /** @nullable */
+  model?: string | null;
+  /** @nullable */
+  trim?: string | null;
+  /** @nullable */
+  vin?: string | null;
+  /** @nullable */
+  color?: string | null;
+  /** @nullable */
+  mileage?: string | null;
+  /** @nullable */
+  insuranceCompany?: string | null;
+  /** @nullable */
+  claimNumber?: string | null;
+  /** @nullable */
+  policyNumber?: string | null;
+  /** @nullable */
+  dateOfLoss?: string | null;
+  /** @nullable */
+  estimator?: string | null;
+  status: VehicleStatus;
+  /** @nullable */
+  estimateTotal?: string | null;
+  /** @nullable */
+  insurancePay?: string | null;
+  /** @nullable */
+  customerPay?: string | null;
+  /** @nullable */
+  deductible?: string | null;
+  partsTotal?: number;
+  partsOrdered?: number;
+  partsReceived?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VehicleDetail {
+  id: number;
+  /** @nullable */
+  workfileId?: string | null;
+  /** @nullable */
+  jobNumber?: string | null;
+  /** @nullable */
+  customerId?: number | null;
+  /** @nullable */
+  customerName?: string | null;
+  /** @nullable */
+  customerPhone?: string | null;
+  /** @nullable */
+  year?: number | null;
+  /** @nullable */
+  make?: string | null;
+  /** @nullable */
+  model?: string | null;
+  /** @nullable */
+  trim?: string | null;
+  /** @nullable */
+  vin?: string | null;
+  /** @nullable */
+  color?: string | null;
+  /** @nullable */
+  mileage?: string | null;
+  /** @nullable */
+  insuranceCompany?: string | null;
+  /** @nullable */
+  claimNumber?: string | null;
+  /** @nullable */
+  policyNumber?: string | null;
+  /** @nullable */
+  dateOfLoss?: string | null;
+  /** @nullable */
+  estimator?: string | null;
+  status: VehicleStatus;
+  /** @nullable */
+  estimateTotal?: string | null;
+  /** @nullable */
+  insurancePay?: string | null;
+  /** @nullable */
+  customerPay?: string | null;
+  /** @nullable */
+  deductible?: string | null;
+  estimate?: EstimateDocument | null;
+  parts: EstimatePart[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VehicleUpdate {
+  status?: VehicleStatus;
+  /** @nullable */
+  jobNumber?: string | null;
+  /** @nullable */
+  insuranceCompany?: string | null;
+  /** @nullable */
+  claimNumber?: string | null;
+  /** @nullable */
+  policyNumber?: string | null;
+  /** @nullable */
+  estimator?: string | null;
+  /** @nullable */
+  mileage?: string | null;
 }
 
 export type SearchParams = {

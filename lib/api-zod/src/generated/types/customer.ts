@@ -11,13 +11,19 @@ export interface Customer {
   id: number;
   name: string;
   /** @nullable */
-  vehicleYear: number | null;
+  phone?: string | null;
   /** @nullable */
-  vehicleMake: string | null;
+  vehicleYear?: number | null;
   /** @nullable */
-  vehicleModel: string | null;
+  vehicleMake?: string | null;
+  /** @nullable */
+  vehicleModel?: string | null;
   /** @nullable */
   roNumber?: string | null;
+  /** @nullable */
+  insuranceCompany?: string | null;
+  /** @nullable */
+  claimNumber?: string | null;
   /** @nullable */
   notes?: string | null;
   status: CustomerStatus;

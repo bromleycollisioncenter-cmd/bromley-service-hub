@@ -9,7 +9,6 @@ import * as zod from 'zod';
 
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
@@ -18,7 +17,6 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
- * Returns summary stats for the home screen
  * @summary Get dashboard stats
  */
 export const GetDashboardResponse = zod.object({
@@ -29,10 +27,13 @@ export const GetDashboardResponse = zod.object({
   "recentlyUpdated": zod.array(zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "vehicleYear": zod.number().nullable(),
-  "vehicleMake": zod.string().nullable(),
-  "vehicleModel": zod.string().nullable(),
+  "phone": zod.string().nullish(),
+  "vehicleYear": zod.number().nullish(),
+  "vehicleMake": zod.string().nullish(),
+  "vehicleModel": zod.string().nullish(),
   "roNumber": zod.string().nullish(),
+  "insuranceCompany": zod.string().nullish(),
+  "claimNumber": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "status": zod.enum(['all_received', 'waiting', 'backordered']),
   "partsTotal": zod.number().optional(),
@@ -44,7 +45,6 @@ export const GetDashboardResponse = zod.object({
 
 
 /**
- * Search by customer name, vehicle, or RO number
  * @summary Search customers
  */
 export const SearchQueryParams = zod.object({
@@ -54,10 +54,13 @@ export const SearchQueryParams = zod.object({
 export const SearchResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "vehicleYear": zod.number().nullable(),
-  "vehicleMake": zod.string().nullable(),
-  "vehicleModel": zod.string().nullable(),
+  "phone": zod.string().nullish(),
+  "vehicleYear": zod.number().nullish(),
+  "vehicleMake": zod.string().nullish(),
+  "vehicleModel": zod.string().nullish(),
   "roNumber": zod.string().nullish(),
+  "insuranceCompany": zod.string().nullish(),
+  "claimNumber": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "status": zod.enum(['all_received', 'waiting', 'backordered']),
   "partsTotal": zod.number().optional(),
@@ -69,16 +72,18 @@ export const SearchResponse = zod.array(SearchResponseItem)
 
 
 /**
- * Returns all customers sorted alphabetically with computed status
  * @summary List all customers
  */
 export const ListCustomersResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "vehicleYear": zod.number().nullable(),
-  "vehicleMake": zod.string().nullable(),
-  "vehicleModel": zod.string().nullable(),
+  "phone": zod.string().nullish(),
+  "vehicleYear": zod.number().nullish(),
+  "vehicleMake": zod.string().nullish(),
+  "vehicleModel": zod.string().nullish(),
   "roNumber": zod.string().nullish(),
+  "insuranceCompany": zod.string().nullish(),
+  "claimNumber": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "status": zod.enum(['all_received', 'waiting', 'backordered']),
   "partsTotal": zod.number().optional(),
@@ -97,20 +102,26 @@ export const ListCustomersResponse = zod.array(ListCustomersResponseItem)
 
 export const CreateCustomerBody = zod.object({
   "name": zod.string().min(1),
+  "phone": zod.string().nullish(),
   "vehicleYear": zod.number().nullish(),
   "vehicleMake": zod.string().nullish(),
   "vehicleModel": zod.string().nullish(),
   "roNumber": zod.string().nullish(),
+  "insuranceCompany": zod.string().nullish(),
+  "claimNumber": zod.string().nullish(),
   "notes": zod.string().nullish()
 })
 
 export const CreateCustomerResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "vehicleYear": zod.number().nullable(),
-  "vehicleMake": zod.string().nullable(),
-  "vehicleModel": zod.string().nullable(),
+  "phone": zod.string().nullish(),
+  "vehicleYear": zod.number().nullish(),
+  "vehicleMake": zod.string().nullish(),
+  "vehicleModel": zod.string().nullish(),
   "roNumber": zod.string().nullish(),
+  "insuranceCompany": zod.string().nullish(),
+  "claimNumber": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "status": zod.enum(['all_received', 'waiting', 'backordered']),
   "partsTotal": zod.number().optional(),
@@ -130,10 +141,13 @@ export const GetCustomerParams = zod.object({
 export const GetCustomerResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "vehicleYear": zod.number().nullable(),
-  "vehicleMake": zod.string().nullable(),
-  "vehicleModel": zod.string().nullable(),
+  "phone": zod.string().nullish(),
+  "vehicleYear": zod.number().nullish(),
+  "vehicleMake": zod.string().nullish(),
+  "vehicleModel": zod.string().nullish(),
   "roNumber": zod.string().nullish(),
+  "insuranceCompany": zod.string().nullish(),
+  "claimNumber": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "status": zod.enum(['all_received', 'waiting', 'backordered']),
   "parts": zod.array(zod.object({
@@ -166,20 +180,26 @@ export const UpdateCustomerParams = zod.object({
 
 export const UpdateCustomerBody = zod.object({
   "name": zod.string().min(1).optional(),
+  "phone": zod.string().nullish(),
   "vehicleYear": zod.number().nullish(),
   "vehicleMake": zod.string().nullish(),
   "vehicleModel": zod.string().nullish(),
   "roNumber": zod.string().nullish(),
+  "insuranceCompany": zod.string().nullish(),
+  "claimNumber": zod.string().nullish(),
   "notes": zod.string().nullish()
 })
 
 export const UpdateCustomerResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "vehicleYear": zod.number().nullable(),
-  "vehicleMake": zod.string().nullable(),
-  "vehicleModel": zod.string().nullable(),
+  "phone": zod.string().nullish(),
+  "vehicleYear": zod.number().nullish(),
+  "vehicleMake": zod.string().nullish(),
+  "vehicleModel": zod.string().nullish(),
   "roNumber": zod.string().nullish(),
+  "insuranceCompany": zod.string().nullish(),
+  "claimNumber": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "status": zod.enum(['all_received', 'waiting', 'backordered']),
   "partsTotal": zod.number().optional(),
@@ -269,5 +289,196 @@ export const DeletePartParams = zod.object({
 })
 
 export const DeletePartResponse = zod.void()
+
+
+/**
+ * @summary List all vehicles / jobs
+ */
+export const ListVehiclesResponseItem = zod.object({
+  "id": zod.number(),
+  "workfileId": zod.string().nullish(),
+  "jobNumber": zod.string().nullish(),
+  "customerId": zod.number().nullish(),
+  "customerName": zod.string().nullish(),
+  "year": zod.number().nullish(),
+  "make": zod.string().nullish(),
+  "model": zod.string().nullish(),
+  "trim": zod.string().nullish(),
+  "vin": zod.string().nullish(),
+  "color": zod.string().nullish(),
+  "mileage": zod.string().nullish(),
+  "insuranceCompany": zod.string().nullish(),
+  "claimNumber": zod.string().nullish(),
+  "policyNumber": zod.string().nullish(),
+  "dateOfLoss": zod.string().nullish(),
+  "estimator": zod.string().nullish(),
+  "status": zod.enum(['waiting_on_parts', 'in_repair', 'ready', 'complete', 'delivered']),
+  "estimateTotal": zod.string().nullish(),
+  "insurancePay": zod.string().nullish(),
+  "customerPay": zod.string().nullish(),
+  "deductible": zod.string().nullish(),
+  "partsTotal": zod.number().optional(),
+  "partsOrdered": zod.number().optional(),
+  "partsReceived": zod.number().optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+export const ListVehiclesResponse = zod.array(ListVehiclesResponseItem)
+
+
+/**
+ * @summary Get vehicle with estimate and parts
+ */
+export const GetVehicleParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetVehicleResponse = zod.object({
+  "id": zod.number(),
+  "workfileId": zod.string().nullish(),
+  "jobNumber": zod.string().nullish(),
+  "customerId": zod.number().nullish(),
+  "customerName": zod.string().nullish(),
+  "customerPhone": zod.string().nullish(),
+  "year": zod.number().nullish(),
+  "make": zod.string().nullish(),
+  "model": zod.string().nullish(),
+  "trim": zod.string().nullish(),
+  "vin": zod.string().nullish(),
+  "color": zod.string().nullish(),
+  "mileage": zod.string().nullish(),
+  "insuranceCompany": zod.string().nullish(),
+  "claimNumber": zod.string().nullish(),
+  "policyNumber": zod.string().nullish(),
+  "dateOfLoss": zod.string().nullish(),
+  "estimator": zod.string().nullish(),
+  "status": zod.enum(['waiting_on_parts', 'in_repair', 'ready', 'complete', 'delivered']),
+  "estimateTotal": zod.string().nullish(),
+  "insurancePay": zod.string().nullish(),
+  "customerPay": zod.string().nullish(),
+  "deductible": zod.string().nullish(),
+  "estimate": zod.union([zod.object({
+  "id": zod.number(),
+  "vehicleId": zod.number(),
+  "workfileId": zod.string().nullish(),
+  "jobNumber": zod.string().nullish(),
+  "estimateDate": zod.string().nullish(),
+  "pdfFilename": zod.string().nullish(),
+  "totalAmount": zod.string().nullish(),
+  "bodyLaborHours": zod.string().nullish(),
+  "paintLaborHours": zod.string().nullish(),
+  "paintSupplies": zod.string().nullish(),
+  "bodySupplies": zod.string().nullish(),
+  "miscellaneous": zod.string().nullish(),
+  "tax": zod.string().nullish(),
+  "grandTotal": zod.string().nullish(),
+  "deductible": zod.string().nullish(),
+  "customerPay": zod.string().nullish(),
+  "insurancePay": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}),zod.null()]).optional(),
+  "parts": zod.array(zod.object({
+  "id": zod.number(),
+  "vehicleId": zod.number(),
+  "estimateId": zod.number(),
+  "lineNumber": zod.number().nullish(),
+  "operation": zod.string().nullish(),
+  "description": zod.string(),
+  "partNumber": zod.string().nullish(),
+  "quantity": zod.string().nullish(),
+  "price": zod.string().nullish(),
+  "laborHours": zod.string().nullish(),
+  "paintHours": zod.string().nullish(),
+  "ordered": zod.boolean(),
+  "received": zod.boolean(),
+  "installed": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update vehicle status or fields
+ */
+export const UpdateVehicleParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateVehicleBody = zod.object({
+  "status": zod.enum(['waiting_on_parts', 'in_repair', 'ready', 'complete', 'delivered']).optional(),
+  "jobNumber": zod.string().nullish(),
+  "insuranceCompany": zod.string().nullish(),
+  "claimNumber": zod.string().nullish(),
+  "policyNumber": zod.string().nullish(),
+  "estimator": zod.string().nullish(),
+  "mileage": zod.string().nullish()
+})
+
+export const UpdateVehicleResponse = zod.object({
+  "id": zod.number(),
+  "workfileId": zod.string().nullish(),
+  "jobNumber": zod.string().nullish(),
+  "customerId": zod.number().nullish(),
+  "customerName": zod.string().nullish(),
+  "year": zod.number().nullish(),
+  "make": zod.string().nullish(),
+  "model": zod.string().nullish(),
+  "trim": zod.string().nullish(),
+  "vin": zod.string().nullish(),
+  "color": zod.string().nullish(),
+  "mileage": zod.string().nullish(),
+  "insuranceCompany": zod.string().nullish(),
+  "claimNumber": zod.string().nullish(),
+  "policyNumber": zod.string().nullish(),
+  "dateOfLoss": zod.string().nullish(),
+  "estimator": zod.string().nullish(),
+  "status": zod.enum(['waiting_on_parts', 'in_repair', 'ready', 'complete', 'delivered']),
+  "estimateTotal": zod.string().nullish(),
+  "insurancePay": zod.string().nullish(),
+  "customerPay": zod.string().nullish(),
+  "deductible": zod.string().nullish(),
+  "partsTotal": zod.number().optional(),
+  "partsOrdered": zod.number().optional(),
+  "partsReceived": zod.number().optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update ordered/received/installed status of an estimate part
+ */
+export const UpdateEstimatePartParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateEstimatePartBody = zod.object({
+  "ordered": zod.boolean().optional(),
+  "received": zod.boolean().optional(),
+  "installed": zod.boolean().optional()
+})
+
+export const UpdateEstimatePartResponse = zod.object({
+  "id": zod.number(),
+  "vehicleId": zod.number(),
+  "estimateId": zod.number(),
+  "lineNumber": zod.number().nullish(),
+  "operation": zod.string().nullish(),
+  "description": zod.string(),
+  "partNumber": zod.string().nullish(),
+  "quantity": zod.string().nullish(),
+  "price": zod.string().nullish(),
+  "laborHours": zod.string().nullish(),
+  "paintHours": zod.string().nullish(),
+  "ordered": zod.boolean(),
+  "received": zod.boolean(),
+  "installed": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
 
 

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Wrench, Users, LayoutDashboard, Search, Settings } from "lucide-react";
+import { Wrench, Users, LayoutDashboard, Search, Settings, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LayoutProps {
@@ -11,6 +11,7 @@ export function Layout({ children }: LayoutProps) {
 
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/" },
+    { icon: FileText, label: "Estimates", href: "/estimates" },
     { icon: Users, label: "Customers", href: "/customers" },
     { icon: Search, label: "Search", href: "/search" },
   ];
@@ -28,7 +29,10 @@ export function Layout({ children }: LayoutProps) {
         
         <nav className="flex-1 space-y-1 p-4">
           {navItems.map((item) => {
-            const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href) && item.href !== "/search");
+            const isActive =
+              location === item.href ||
+              (item.href === "/estimates" && (location.startsWith("/estimates") || location.startsWith("/vehicles"))) ||
+              (item.href !== "/" && item.href !== "/estimates" && item.href !== "/search" && location.startsWith(item.href));
             const Icon = item.icon;
             
             return (
@@ -66,6 +70,7 @@ export function Layout({ children }: LayoutProps) {
           </div>
           <div className="flex gap-4 text-sm font-medium">
             <Link href="/" className={location === "/" ? "text-primary" : "text-muted-foreground"}>Dash</Link>
+            <Link href="/estimates" className={location.startsWith("/estimates") || location.startsWith("/vehicles") ? "text-primary" : "text-muted-foreground"}>Est.</Link>
             <Link href="/customers" className={location.startsWith("/customers") ? "text-primary" : "text-muted-foreground"}>Cust</Link>
             <Link href="/search" className={location === "/search" ? "text-primary" : "text-muted-foreground"}>Search</Link>
           </div>

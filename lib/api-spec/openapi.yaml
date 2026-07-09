@@ -18,13 +18,16 @@ tags:
     description: Dashboard summary
   - name: search
     description: Search operations
+  - name: vehicles
+    description: Vehicle/job operations
+  - name: estimateParts
+    description: Estimate part operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -38,7 +41,6 @@ paths:
       operationId: getDashboard
       tags: [dashboard]
       summary: Get dashboard stats
-      description: Returns summary stats for the home screen
       responses:
         "200":
           description: Dashboard stats
@@ -52,7 +54,6 @@ paths:
       operationId: search
       tags: [search]
       summary: Search customers
-      description: Search by customer name, vehicle, or RO number
       parameters:
         - name: q
           in: query
@@ -74,7 +75,6 @@ paths:
       operationId: listCustomers
       tags: [customers]
       summary: List all customers
-      description: Returns all customers sorted alphabetically with computed status
       responses:
         "200":
           description: List of customers
@@ -230,6 +230,94 @@ paths:
         "404":
           description: Not found
 
+  /vehicles:
+    get:
+      operationId: listVehicles
+      tags: [vehicles]
+      summary: List all vehicles / jobs
+      responses:
+        "200":
+          description: List of vehicles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Vehicle"
+
+  /vehicles/{id}:
+    get:
+      operationId: getVehicle
+      tags: [vehicles]
+      summary: Get vehicle with estimate and parts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Vehicle detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VehicleDetail"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateVehicle
+      tags: [vehicles]
+      summary: Update vehicle status or fields
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VehicleUpdate"
+      responses:
+        "200":
+          description: Updated vehicle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vehicle"
+        "404":
+          description: Not found
+
+  /estimate-parts/{id}:
+    patch:
+      operationId: updateEstimatePart
+      tags: [estimateParts]
+      summary: Update ordered/received/installed status of an estimate part
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EstimatePartUpdate"
+      responses:
+        "200":
+          description: Updated estimate part
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EstimatePart"
+        "404":
+          description: Not found
+
 components:
   schemas:
     HealthStatus:
@@ -237,8 +325,7 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
     PartStatus:
       type: string
@@ -247,6 +334,10 @@ components:
     CustomerStatus:
       type: string
       enum: [all_received, waiting, backordered]
+
+    VehicleStatus:
+      type: string
+      enum: [waiting_on_parts, in_repair, ready, complete, delivered]
 
     Part:
       type: object
@@ -306,12 +397,14 @@ components:
 
     Customer:
       type: object
-      required: [id, name, vehicleYear, vehicleMake, vehicleModel, status, updatedAt, createdAt]
+      required: [id, name, status, updatedAt, createdAt]
       properties:
         id:
           type: integer
         name:
           type: string
+        phone:
+          type: ["string", "null"]
         vehicleYear:
           type: ["integer", "null"]
         vehicleMake:
@@ -319,6 +412,10 @@ components:
         vehicleModel:
           type: ["string", "null"]
         roNumber:
+          type: ["string", "null"]
+        insuranceCompany:
+          type: ["string", "null"]
+        claimNumber:
           type: ["string", "null"]
         notes:
           type: ["string", "null"]
@@ -337,12 +434,14 @@ components:
 
     CustomerDetail:
       type: object
-      required: [id, name, vehicleYear, vehicleMake, vehicleModel, status, parts, partsTotal, partsReceived, updatedAt, createdAt]
+      required: [id, name, status, parts, partsTotal, partsReceived, updatedAt, createdAt]
       properties:
         id:
           type: integer
         name:
           type: string
+        phone:
+          type: ["string", "null"]
         vehicleYear:
           type: ["integer", "null"]
         vehicleMake:
@@ -350,6 +449,10 @@ components:
         vehicleModel:
           type: ["string", "null"]
         roNumber:
+          type: ["string", "null"]
+        insuranceCompany:
+          type: ["string", "null"]
+        claimNumber:
           type: ["string", "null"]
         notes:
           type: ["string", "null"]
@@ -377,6 +480,8 @@ components:
         name:
           type: string
           minLength: 1
+        phone:
+          type: ["string", "null"]
         vehicleYear:
           type: ["integer", "null"]
         vehicleMake:
@@ -384,6 +489,10 @@ components:
         vehicleModel:
           type: ["string", "null"]
         roNumber:
+          type: ["string", "null"]
+        insuranceCompany:
+          type: ["string", "null"]
+        claimNumber:
           type: ["string", "null"]
         notes:
           type: ["string", "null"]
@@ -394,6 +503,8 @@ components:
         name:
           type: string
           minLength: 1
+        phone:
+          type: ["string", "null"]
         vehicleYear:
           type: ["integer", "null"]
         vehicleMake:
@@ -401,6 +512,10 @@ components:
         vehicleModel:
           type: ["string", "null"]
         roNumber:
+          type: ["string", "null"]
+        insuranceCompany:
+          type: ["string", "null"]
+        claimNumber:
           type: ["string", "null"]
         notes:
           type: ["string", "null"]
@@ -440,3 +555,241 @@ components:
           type: array
           items:
             type: string
+
+    EstimatePart:
+      type: object
+      required: [id, vehicleId, estimateId, description, ordered, received, installed, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        vehicleId:
+          type: integer
+        estimateId:
+          type: integer
+        lineNumber:
+          type: ["integer", "null"]
+        operation:
+          type: ["string", "null"]
+        description:
+          type: string
+        partNumber:
+          type: ["string", "null"]
+        quantity:
+          type: ["string", "null"]
+        price:
+          type: ["string", "null"]
+        laborHours:
+          type: ["string", "null"]
+        paintHours:
+          type: ["string", "null"]
+        ordered:
+          type: boolean
+        received:
+          type: boolean
+        installed:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    EstimatePartUpdate:
+      type: object
+      properties:
+        ordered:
+          type: boolean
+        received:
+          type: boolean
+        installed:
+          type: boolean
+
+    EstimateDocument:
+      type: object
+      required: [id, vehicleId, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        vehicleId:
+          type: integer
+        workfileId:
+          type: ["string", "null"]
+        jobNumber:
+          type: ["string", "null"]
+        estimateDate:
+          type: ["string", "null"]
+        pdfFilename:
+          type: ["string", "null"]
+        totalAmount:
+          type: ["string", "null"]
+        bodyLaborHours:
+          type: ["string", "null"]
+        paintLaborHours:
+          type: ["string", "null"]
+        paintSupplies:
+          type: ["string", "null"]
+        bodySupplies:
+          type: ["string", "null"]
+        miscellaneous:
+          type: ["string", "null"]
+        tax:
+          type: ["string", "null"]
+        grandTotal:
+          type: ["string", "null"]
+        deductible:
+          type: ["string", "null"]
+        customerPay:
+          type: ["string", "null"]
+        insurancePay:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Vehicle:
+      type: object
+      required: [id, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        workfileId:
+          type: ["string", "null"]
+        jobNumber:
+          type: ["string", "null"]
+        customerId:
+          type: ["integer", "null"]
+        customerName:
+          type: ["string", "null"]
+        year:
+          type: ["integer", "null"]
+        make:
+          type: ["string", "null"]
+        model:
+          type: ["string", "null"]
+        trim:
+          type: ["string", "null"]
+        vin:
+          type: ["string", "null"]
+        color:
+          type: ["string", "null"]
+        mileage:
+          type: ["string", "null"]
+        insuranceCompany:
+          type: ["string", "null"]
+        claimNumber:
+          type: ["string", "null"]
+        policyNumber:
+          type: ["string", "null"]
+        dateOfLoss:
+          type: ["string", "null"]
+        estimator:
+          type: ["string", "null"]
+        status:
+          $ref: "#/components/schemas/VehicleStatus"
+        estimateTotal:
+          type: ["string", "null"]
+        insurancePay:
+          type: ["string", "null"]
+        customerPay:
+          type: ["string", "null"]
+        deductible:
+          type: ["string", "null"]
+        partsTotal:
+          type: integer
+        partsOrdered:
+          type: integer
+        partsReceived:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    VehicleDetail:
+      type: object
+      required: [id, status, parts, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        workfileId:
+          type: ["string", "null"]
+        jobNumber:
+          type: ["string", "null"]
+        customerId:
+          type: ["integer", "null"]
+        customerName:
+          type: ["string", "null"]
+        customerPhone:
+          type: ["string", "null"]
+        year:
+          type: ["integer", "null"]
+        make:
+          type: ["string", "null"]
+        model:
+          type: ["string", "null"]
+        trim:
+          type: ["string", "null"]
+        vin:
+          type: ["string", "null"]
+        color:
+          type: ["string", "null"]
+        mileage:
+          type: ["string", "null"]
+        insuranceCompany:
+          type: ["string", "null"]
+        claimNumber:
+          type: ["string", "null"]
+        policyNumber:
+          type: ["string", "null"]
+        dateOfLoss:
+          type: ["string", "null"]
+        estimator:
+          type: ["string", "null"]
+        status:
+          $ref: "#/components/schemas/VehicleStatus"
+        estimateTotal:
+          type: ["string", "null"]
+        insurancePay:
+          type: ["string", "null"]
+        customerPay:
+          type: ["string", "null"]
+        deductible:
+          type: ["string", "null"]
+        estimate:
+          anyOf:
+            - $ref: "#/components/schemas/EstimateDocument"
+            - type: "null"
+        parts:
+          type: array
+          items:
+            $ref: "#/components/schemas/EstimatePart"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    VehicleUpdate:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/VehicleStatus"
+        jobNumber:
+          type: ["string", "null"]
+        insuranceCompany:
+          type: ["string", "null"]
+        claimNumber:
+          type: ["string", "null"]
+        policyNumber:
+          type: ["string", "null"]
+        estimator:
+          type: ["string", "null"]
+        mileage:
+          type: ["string", "null"]

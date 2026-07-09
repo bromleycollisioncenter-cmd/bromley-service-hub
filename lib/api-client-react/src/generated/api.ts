@@ -25,11 +25,16 @@ import type {
   CustomerInput,
   CustomerUpdate,
   DashboardStats,
+  EstimatePart,
+  EstimatePartUpdate,
   HealthStatus,
   Part,
   PartInput,
   PartUpdate,
-  SearchParams
+  SearchParams,
+  Vehicle,
+  VehicleDetail,
+  VehicleUpdate
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -68,7 +73,6 @@ export const getHealthCheckUrl = () => {
 }
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const healthCheck = async ( options?: RequestInit): Promise<HealthStatus> => {
@@ -146,7 +150,6 @@ export const getGetDashboardUrl = () => {
 }
 
 /**
- * Returns summary stats for the home screen
  * @summary Get dashboard stats
  */
 export const getDashboard = async ( options?: RequestInit): Promise<DashboardStats> => {
@@ -231,7 +234,6 @@ export const getSearchUrl = (params: SearchParams,) => {
 }
 
 /**
- * Search by customer name, vehicle, or RO number
  * @summary Search customers
  */
 export const search = async (params: SearchParams, options?: RequestInit): Promise<Customer[]> => {
@@ -309,7 +311,6 @@ export const getListCustomersUrl = () => {
 }
 
 /**
- * Returns all customers sorted alphabetically with computed status
  * @summary List all customers
  */
 export const listCustomers = async ( options?: RequestInit): Promise<Customer[]> => {
@@ -876,5 +877,301 @@ export const useDeletePart = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getDeletePartMutationOptions(options));
+    }
+
+export const getListVehiclesUrl = () => {
+
+
+
+
+  return `/api/vehicles`
+}
+
+/**
+ * @summary List all vehicles / jobs
+ */
+export const listVehicles = async ( options?: RequestInit): Promise<Vehicle[]> => {
+
+  return customFetch<Vehicle[]>(getListVehiclesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListVehiclesQueryKey = () => {
+    return [
+    `/api/vehicles`
+    ] as const;
+    }
+
+
+export const getListVehiclesQueryOptions = <TData = Awaited<ReturnType<typeof listVehicles>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listVehicles>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListVehiclesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listVehicles>>> = ({ signal }) => listVehicles({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listVehicles>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListVehiclesQueryResult = NonNullable<Awaited<ReturnType<typeof listVehicles>>>
+export type ListVehiclesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all vehicles / jobs
+ */
+
+export function useListVehicles<TData = Awaited<ReturnType<typeof listVehicles>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listVehicles>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListVehiclesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetVehicleUrl = (id: number,) => {
+
+
+
+
+  return `/api/vehicles/${id}`
+}
+
+/**
+ * @summary Get vehicle with estimate and parts
+ */
+export const getVehicle = async (id: number, options?: RequestInit): Promise<VehicleDetail> => {
+
+  return customFetch<VehicleDetail>(getGetVehicleUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetVehicleQueryKey = (id: number,) => {
+    return [
+    `/api/vehicles/${id}`
+    ] as const;
+    }
+
+
+export const getGetVehicleQueryOptions = <TData = Awaited<ReturnType<typeof getVehicle>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getVehicle>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetVehicleQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVehicle>>> = ({ signal }) => getVehicle(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getVehicle>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetVehicleQueryResult = NonNullable<Awaited<ReturnType<typeof getVehicle>>>
+export type GetVehicleQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get vehicle with estimate and parts
+ */
+
+export function useGetVehicle<TData = Awaited<ReturnType<typeof getVehicle>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getVehicle>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetVehicleQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateVehicleUrl = (id: number,) => {
+
+
+
+
+  return `/api/vehicles/${id}`
+}
+
+/**
+ * @summary Update vehicle status or fields
+ */
+export const updateVehicle = async (id: number,
+    vehicleUpdate: VehicleUpdate, options?: RequestInit): Promise<Vehicle> => {
+
+  return customFetch<Vehicle>(getUpdateVehicleUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(vehicleUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateVehicleMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateVehicle>>, TError,{id: number;data: BodyType<VehicleUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateVehicle>>, TError,{id: number;data: BodyType<VehicleUpdate>}, TContext> => {
+
+const mutationKey = ['updateVehicle'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateVehicle>>, {id: number;data: BodyType<VehicleUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateVehicle(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateVehicleMutationResult = NonNullable<Awaited<ReturnType<typeof updateVehicle>>>
+    export type UpdateVehicleMutationBody = BodyType<VehicleUpdate>
+    export type UpdateVehicleMutationError = ErrorType<void>
+
+    /**
+ * @summary Update vehicle status or fields
+ */
+export const useUpdateVehicle = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateVehicle>>, TError,{id: number;data: BodyType<VehicleUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateVehicle>>,
+        TError,
+        {id: number;data: BodyType<VehicleUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateVehicleMutationOptions(options));
+    }
+
+export const getUpdateEstimatePartUrl = (id: number,) => {
+
+
+
+
+  return `/api/estimate-parts/${id}`
+}
+
+/**
+ * @summary Update ordered/received/installed status of an estimate part
+ */
+export const updateEstimatePart = async (id: number,
+    estimatePartUpdate: EstimatePartUpdate, options?: RequestInit): Promise<EstimatePart> => {
+
+  return customFetch<EstimatePart>(getUpdateEstimatePartUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(estimatePartUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateEstimatePartMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEstimatePart>>, TError,{id: number;data: BodyType<EstimatePartUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateEstimatePart>>, TError,{id: number;data: BodyType<EstimatePartUpdate>}, TContext> => {
+
+const mutationKey = ['updateEstimatePart'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateEstimatePart>>, {id: number;data: BodyType<EstimatePartUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateEstimatePart(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateEstimatePartMutationResult = NonNullable<Awaited<ReturnType<typeof updateEstimatePart>>>
+    export type UpdateEstimatePartMutationBody = BodyType<EstimatePartUpdate>
+    export type UpdateEstimatePartMutationError = ErrorType<void>
+
+    /**
+ * @summary Update ordered/received/installed status of an estimate part
+ */
+export const useUpdateEstimatePart = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEstimatePart>>, TError,{id: number;data: BodyType<EstimatePartUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateEstimatePart>>,
+        TError,
+        {id: number;data: BodyType<EstimatePartUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateEstimatePartMutationOptions(options));
     }
 

@@ -10,6 +10,8 @@ export interface CustomerInput {
   /** @minLength 1 */
   name: string;
   /** @nullable */
+  phone?: string | null;
+  /** @nullable */
   vehicleYear?: number | null;
   /** @nullable */
   vehicleMake?: string | null;
@@ -17,6 +19,10 @@ export interface CustomerInput {
   vehicleModel?: string | null;
   /** @nullable */
   roNumber?: string | null;
+  /** @nullable */
+  insuranceCompany?: string | null;
+  /** @nullable */
+  claimNumber?: string | null;
   /** @nullable */
   notes?: string | null;
 }
