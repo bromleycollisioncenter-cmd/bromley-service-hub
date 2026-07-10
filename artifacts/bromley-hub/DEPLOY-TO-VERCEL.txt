@@ -1,0 +1,11 @@
+BROMLEY SERVICE HUB — FRONTEND DEPLOYMENT
+
+1. Upload these files to the root of your GitHub repository, replacing the old files.
+2. In Vercel choose Add New > Project and import the repository.
+3. Leave Root Directory as ./ (the repository root).
+4. Click Deploy. Do not choose artifacts or bromley-hub.
+
+This package includes a root vercel.json that tells Vercel exactly what to build and where the finished website is located.
+
+The frontend will load, including direct links such as /estimates and /customers.
+The estimate upload requires the API server and database to be deployed separately afterward.
